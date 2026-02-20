@@ -29,8 +29,10 @@ public class RevisionTaskQueryService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         LocalDateTime now = LocalDateTime.now();
-        List<RevisionTask> tasks = revisionTaskRepository.findByUserAndStatusAndDueAtBefore(
-                user, RevisionTaskStatus.PENDING, now.plusSeconds(1)
+        List<RevisionTask> tasks = revisionTaskRepository.findByUserIdAndStatusAndDueAtBeforeOrderByDueAtAsc(
+                userId,
+                RevisionTaskStatus.PENDING,
+                now.plusDays(1)  // include today + tomorrow
         );
 
         return tasks.stream().map(this::toDto).toList();

@@ -84,6 +84,7 @@ public class SpacedRepetitionEngineService {
         revisionEventRepository.save(ev);
     }
 
+
     private static double clamp(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
     }

@@ -4,5 +4,6 @@ public enum RevisionEventType {
     GENERATED,
     TASK_CREATED,
     COMPLETED,
+    SKIPPED,
     RESCHEDULED
 }

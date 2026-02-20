@@ -16,6 +16,10 @@ public interface KnowledgeStateRepository extends JpaRepository<KnowledgeState, 
 
     List<KnowledgeState> findByUser(User user);
 
+    List<KnowledgeState> findByUserId(Long userId);
+    Optional<KnowledgeState> findByUserIdAndSkillId(Long userId, Long skillId);
+
+
     List<KnowledgeState> findByUserOrderByMasteryScoreAsc(User user);
 
     @Query("SELECT ks FROM KnowledgeState ks WHERE ks.user = :user AND ks.masteryScore < :threshold")
