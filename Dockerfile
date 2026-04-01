@@ -3,7 +3,10 @@ LABEL authors="s8gam"
 
 ENTRYPOINT ["top", "-b"]
 
-FROM openjdk:17-jdk-slim
+
+
+
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
 COPY . .
