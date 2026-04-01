@@ -6,7 +6,7 @@ ENTRYPOINT ["top", "-b"]
 
 
 
-FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
 
 COPY . .
