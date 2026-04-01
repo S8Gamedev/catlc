@@ -5,54 +5,56 @@ import com.majerpro.learning_platform.dto.UserRegistrationDto;
 import com.majerpro.learning_platform.dto.UserResponseDto;
 import com.majerpro.learning_platform.model.User;
 import com.majerpro.learning_platform.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public UserResponseDto registerUser(UserRegistrationDto dto) {
-        // Check if username already exists
         if (userRepository.existsByUsername(dto.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
 
-        // Check if email already exists
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword()); // TODO: Hash password in Stage 9 (Security)
+
+        // Hash password before saving
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
         user.setFullName(dto.getFullName());
         user.setIsActive(true);
 
-        // Save to database
         User savedUser = userRepository.save(user);
-
-        // Convert to response DTO
         return convertToDto(savedUser);
     }
 
     public UserResponseDto loginUser(UserLoginDto dto) {
-        // Find user by username or email
         User user = userRepository.findByUsername(dto.getUsernameOrEmail())
                 .or(() -> userRepository.findByEmail(dto.getUsernameOrEmail()))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check password (TODO: Hash comparison in Stage 9)
-        if (!user.getPassword().equals(dto.getPassword())) {
+        // Verify hashed password
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
 
-        // Update last login
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 

@@ -26,6 +26,7 @@ public interface RevisionTaskRepository extends JpaRepository<RevisionTask, Long
             LocalDateTime cutoff
     );
 
+
     boolean existsByUserAndSkillAndStatusAndDueAt(
             User user,
             Skill skill,
@@ -41,4 +42,10 @@ public interface RevisionTaskRepository extends JpaRepository<RevisionTask, Long
             RevisionTaskStatus status,
             LocalDateTime cutoff
     );
+
+    List<RevisionTask> findByUserIdAndSkillIdOrderByDueAtAsc(Long userId, Long skillId);
+
+    long countByUserIdAndSkillId(Long userId, Long skillId);
+
+    long countByUserIdAndSkillIdAndStatus(Long userId, Long skillId, RevisionTaskStatus status);
 }

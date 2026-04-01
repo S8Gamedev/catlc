@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/default :: page('Code Editor', ~{::body})">
+<body>
+<main class="container py-4">
+    <div class="row g-4">
+        <!-- Problem details -->
+        <div class="col-lg-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 th:text="${problem.title}">Print Hello</h4>
+                <span class="badge bg-success" th:text="${problem.difficultyLevel}">BEGINNER</span>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    Problem Statement
+                </div>
+                <div class="card-body">
+                    <p class="mb-2" th:text="${problem.prompt}">
+                        Write a program that prints "Hello".
+                    </p>
+
+                    <div th:if="${problem.sampleInput != null}">
+                        <h6>Sample Input</h6>
+                        <pre class="bg-light p-2 rounded" th:text="${problem.sampleInput}"> </pre>
+                    </div>
+
+                    <div th:if="${problem.expectedOutput != null}">
+                        <h6>Expected Output</h6>
+                        <pre class="bg-light p-2 rounded" th:text="${problem.expectedOutput}">Hello</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language selector (simple for now) -->
+            <div class="card">
+                <div class="card-header">
+                    Language
+                </div>
+                <div class="card-body">
+                    <select id="languageSelect" class="form-select">
+                        <option th:value="${defaultLanguageId}" selected>Java (Judge0 id [[${defaultLanguageId}]])</option>
+                        <!-- Add more options later if you want -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor + output -->
+        <div class="col-lg-8">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Code Editor</span>
+                    <div class="d-flex gap-2">
+                        <button id="runBtn" class="btn btn-outline-secondary btn-sm">
+                            Run
+                        </button>
+                        <button id="submitBtn" class="btn btn-primary btn-sm">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="editor" style="height: 420px; border-radius: 0 0 .375rem .375rem;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Output
+                </div>
+                <div class="card-body">
+                    <div id="statusBadge" class="mb-2">
+                        <span class="badge bg-secondary">Not run yet</span>
+                    </div>
+
+                    <h6 class="mb-1">Stdout</h6>
+                    <pre id="stdout" class="bg-light p-2 rounded" style="max-height: 150px; overflow:auto;"></pre>
+
+                    <h6 class="mt-3 mb-1">Stderr</h6>
+                    <pre id="stderr" class="bg-light p-2 rounded" style="max-height: 150px; overflow:auto;"></pre>
+
+                    <h6 class="mt-3 mb-1">Compile Output</h6>
+                    <pre id="compileOutput" class="bg-light p-2 rounded" style="max-height: 150px; overflow:auto;"></pre>
+
+                    <div class="mt-3 text-muted small">
+                        <span id="metaInfo"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Monaco via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+
+<script>
+    const userId = 1;
+    const problemId = 1;
+    const defaultLanguageId = 62;
+    const starterCode = "public class Main { public static void main(String[] args) { } }";
+    const languagesUrl = "/api/practice/code/languages";
+</script>
+
+
+
+<script>
+    let editor;
+    let lastSubmissionId = null;
+
+    // Configure Monaco loader
+    require.config({
+        paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }
+    });
+
+    require(['vs/editor/editor.main'], function () {
+        editor = monaco.editor.create(document.getElementById('editor'), {
+            value: starterCode,
+            language: 'java',       // default visual language
+            theme: 'vs-light',
+            automaticLayout: true,
+            fontSize: 14,
+        });
+
+        // After editor is ready, load languages from backend
+        loadLanguages();
+    });
+
+    async function callApi(url, options) {
+        const res = await fetch(url, options);
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`HTTP ${res.status}: ${text}`);
+        }
+        return res.json();
+    }
+
+    async function loadLanguages() {
+        try {
+            const langs = await callApi(languagesUrl, { method: 'GET' });
+            const select = document.getElementById('languageSelect');
+            select.innerHTML = '';
+
+            // Expect something like: [{id: 62, name: "Java (OpenJDK 17.0.1)"}, ...][file:1][web:11]
+            langs.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.name;
+                if (l.id === defaultLanguageId) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+
+            // Set Monaco language based on the selected Judge0 language
+            select.addEventListener('change', () => {
+                updateMonacoLanguage();
+            });
+
+            // Initial language set
+            updateMonacoLanguage();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('stderr').textContent =
+                'Failed to load languages: ' + e.message;
+        }
+    }
+
+    function judge0ToMonacoLanguage(langName) {
+        // Very simple mapping; extend as needed
+        const lower = (langName || '').toLowerCase();
+        if (lower.includes('java')) return 'java';
+        if (lower.includes('python')) return 'python';
+        if (lower.includes('c++')) return 'cpp';
+        if (lower.includes('c ')) return 'c';
+        if (lower.includes('javascript') || lower.includes('node')) return 'javascript';
+        if (lower.includes('typescript')) return 'typescript';
+        return 'plaintext';
+    }
+
+    function updateMonacoLanguage() {
+        const select = document.getElementById('languageSelect');
+        const selectedText = select.options[select.selectedIndex].textContent;
+        const monacoLang = judge0ToMonacoLanguage(selectedText);
+        if (editor && monacoLang) {
+            monaco.editor.setModelLanguage(editor.getModel(), monacoLang);//[web:21][web:25]
+        }
+    }
+
+    function setStatusBadge(result) {
+        const badge = document.getElementById('statusBadge');
+
+        // Your backend uses Judge0 status object with description field, e.g. { id: 3, description: "Accepted" }[web:8][web:11][web:14][file:1]
+        const statusDesc =
+            (result.status && (result.status.description || result.status)) ||
+            result.statusDescription ||
+            'Done';
+
+        const score = typeof result.score === 'number' ? result.score : null;
+
+        let color = 'secondary';
+        const descLower = statusDesc.toLowerCase();
+
+        if (descLower.includes('accepted')) color = 'success';
+        else if (descLower.includes('wrong')) color = 'danger';
+        else if (descLower.includes('compilation')) color = 'warning';
+        else if (descLower.includes('queue') || descLower.includes('processing')) color = 'info';
+
+        badge.innerHTML =
+            `<span class="badge bg-${color}">${statusDesc}` +
+            (score !== null ? ` · Score ${score}` : '') +
+            `</span>`;
+    }
+
+    function renderResult(result) {
+        document.getElementById('stdout').textContent = result.stdout || '';
+        document.getElementById('stderr').textContent = result.stderr || '';
+        document.getElementById('compileOutput').textContent = result.compileOutput || '';
+
+        const meta = [];
+        if (result.time) meta.push(`Time: ${result.time}s`);
+        if (result.memory) meta.push(`Memory: ${result.memory} KB`);
+        if (result.evaluatedAt || result.finishedAt)
+            meta.push(`Evaluated: ${result.evaluatedAt || result.finishedAt}`);
+
+        document.getElementById('metaInfo').textContent = meta.join(' · ');
+
+        setStatusBadge(result);
+    }
+
+    async function submitCode() {
+        const languageId = parseInt(document.getElementById('languageSelect').value, 10);
+        const sourceCode = editor.getValue();
+
+        // Reset UI state
+        document.getElementById('stdout').textContent = '';
+        document.getElementById('stderr').textContent = '';
+        document.getElementById('compileOutput').textContent = '';
+        document.getElementById('metaInfo').textContent = 'Submitting...';
+        setStatusBadge({ status: 'In Queue' });
+
+        try {
+            // Submit
+            const submitPayload = {
+                userId: userId,
+                problemId: problemId,
+                languageId: languageId,
+                sourceCode: sourceCode
+            };
+
+            const submitRes = await callApi('/api/practice/code/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(submitPayload)
+            });
+
+            // Align with your actual DTO: adjust if field name differs
+            lastSubmissionId = submitRes.submissionId || submitRes.id;
+
+            // Poll evaluate endpoint until not in queue/processing
+            const evalUrl = `/api/practice/code/evaluate/${lastSubmissionId}`;
+            let attempts = 0;
+            let finalResult = null;
+
+            while (attempts < 12) {
+                attempts++;
+                const res = await callApi(evalUrl, { method: 'POST' });
+
+                finalResult = res;
+
+                // Judge0 default: status.id 1/2 => queued/processing, >=3 done[web:8][web:11][web:14]
+                const statusObj = res.status || {};
+                const statusId = statusObj.id || res.statusId;
+                if (statusId && statusId >= 3) {
+                    break;
+                }
+
+                await new Promise(r => setTimeout(r, 800));
+            }
+
+            renderResult(finalResult || { status: { description: 'Unknown' } });
+        } catch (e) {
+            console.error(e);
+            setStatusBadge({ status: 'Error' });
+            document.getElementById('stderr').textContent = e.message;
+        }
+    }
+
+    document.getElementById('runBtn').addEventListener('click', function () {
+        submitCode();
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', function () {
+        submitCode();
+    });
+</script>
+
+</body>
+</html>

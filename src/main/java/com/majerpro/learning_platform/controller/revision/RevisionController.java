@@ -15,14 +15,16 @@ import com.majerpro.learning_platform.service.revision.SpacedRepetitionEngineSer
 import com.majerpro.learning_platform.service.revision.RevisionOutcomeService;
 import com.majerpro.learning_platform.service.revision.RevisionPlannerService;
 import com.majerpro.learning_platform.service.revision.RevisionTaskQueryService;
+import org.springframework.stereotype.Controller;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/api/revision")
 public class RevisionController {
 
@@ -115,6 +117,17 @@ public class RevisionController {
                         .toList()
         );
 
+
+
+
         return ResponseEntity.ok(dto);
+    }
+    @GetMapping("/")  // /revisions → UI page
+    public String todayTasksUi(@RequestParam(defaultValue = "1") Long userId, Model model) {
+        List<RevisionTaskDto> tasks = queryService.getTodayTasks(userId);
+        model.addAttribute("tasks", tasks);
+        model.addAttribute("userId", userId);
+        model.addAttribute("taskCount", tasks.size());
+        return "revisions/today";  // templates/revisions/today.html
     }
 }

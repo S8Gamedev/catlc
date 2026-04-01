@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/default :: page('Code Practice', ~{::body})">
+<body>
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Code Problems</h3>
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Difficulty</th>
+                    <th>Language</th>
+                    <th style="width: 1%;">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${problems}">
+                    <td th:text="${p.title}">Print Hello</td>
+                    <td>
+                        <span class="badge bg-success" th:text="${p.difficultyLevel}">BEGINNER</span>
+                    </td>
+                    <td>
+                        <!-- simple static label; you can map from languageId later -->
+                        Java
+                    </td>
+                    <td>
+                        <a th:href="@{'/practice/' + ${p.id}}"
+                           class="btn btn-primary btn-sm">
+                            Solve
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(problems)}">
+                    <td colspan="4" class="text-center text-muted py-4">
+                        No problems yet. Create some via your APIs.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -38,6 +38,16 @@ public class RevisionTaskQueryService {
         return tasks.stream().map(this::toDto).toList();
     }
 
+
+    // findById fix
+    @Transactional(readOnly = true)
+    public RevisionTaskDto getTaskById(Long taskId) {
+        RevisionTask task = revisionTaskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Revision task not found"));
+
+        return toDto(task);
+    }
+
     private RevisionTaskDto toDto(RevisionTask t) {
         RevisionTaskDto dto = new RevisionTaskDto();
         dto.setTaskId(t.getId());

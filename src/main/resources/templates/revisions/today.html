@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: page('Today\'s Tasks', ~{::body})}">
+
+<body>
+<main class="container py-5">
+    <!-- Hero Stats -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                <h3 th:text="${taskCount}">3</h3>
+                <p class="text-muted mb-0">Tasks Due Today</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="fas fa-fire fa-3x text-warning mb-3"></i>
+                <h3 class="text-warning" th:text="${urgentCount}">0</h3>
+                <p class="text-muted mb-0">Urgent</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                <h3 class="text-danger" th:text="${overdueCount}">0</h3>
+                <p class="text-muted mb-0">Overdue</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="fas fa-streak fa-3x text-success mb-3"></i>
+                <h3 class="text-success">7</h3>
+                <p class="text-muted mb-0">Current Streak</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Grid -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-list-check me-2"></i>Today's Tasks
+                </h2>
+                <a th:href="@{/dashboard}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${taskCount == 0}" class="text-center py-5">
+        <i class="fas fa-check-circle fa-5x text-success mb-4 opacity-75"></i>
+        <h3 class="text-muted">🎉 All caught up!</h3>
+        <p class="text-muted">Great job! Check back tomorrow for new tasks.</p>
+        <a href="/skills" class="btn btn-primary">Practice Skills Early</a>
+    </div>
+
+    <div th:if="${taskCount > 0}" class="row g-4">
+        <div th:each="task : ${tasks}" class="col-lg-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0 overflow-hidden task-card">
+                <!-- Priority Badge -->
+                <div class="card-header bg-transparent border-0 pt-3 px-4 pb-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span th:switch="${task.dueAt.isBefore(#temporals.createNow().minusHours(1))}">
+                            <span th:case="true" class="badge bg-danger">Overdue</span>
+                            <span th:case="*" class="badge bg-warning">Due Soon</span>
+                        </span>
+                        <small class="text-muted" th:text="${#temporals.format(task.dueAt, 'HH:mm')}">14:30</small>
+                    </div>
+                </div>
+
+                <!-- Task Content -->
+                <div class="card-body p-4 pt-0">
+                    <h5 class="card-title fw-semibold mb-3" th:text="${task.skillName}">Java Loops</h5>
+
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark me-2 mb-1" th:text="${task.taskType}">CODE</span>
+                        <span class="badge bg-light text-dark" th:text="${task.recommendedDifficulty}">MEDIUM</span>
+                    </div>
+
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-brain me-1"></i>
+                        Review to maintain mastery. Last practiced 2 days ago.
+                    </p>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a th:href="@{'/revisions/' + ${task.taskId}}"
+                           class="btn btn-primary">
+                            <i class="fas fa-play me-2" th:if="${task.taskType == 'CODE'}"></i>
+                            <i class="fas fa-clipboard-list me-2" th:if="${task.taskType == 'QUIZ'}"></i>
+                            <i class="fas fa-book-open me-2" th:if="${task.taskType == 'READREVIEW'}"></i>
+                            Start Now
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="markComplete([[${task.taskId}]])">
+                            <i class="fas fa-check me-1"></i>Mark Complete Later
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Footer -->
+                <div class="card-footer bg-light border-0 p-3">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary"
+                             role="progressbar"
+                             th:style="'width: 75%'"
+                             th:attr="aria-valuenow=75,aria-valuemin=0,aria-valuemax=100">
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-1">75% mastery confidence</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function markComplete(taskId) {
+        // POST /api/revision/{taskId}/complete
+        // recallScore slider 0.0-1.0 (Easy/Medium/Hard)
+        alert('Mark as complete (TODO: slider + API)');
+    }
+</script>
+</body>
+</html>

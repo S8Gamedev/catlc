@@ -1,7 +1,7 @@
 package com.majerpro.learning_platform.controller;
 
 import com.majerpro.learning_platform.dto.analytics.*;
-import com.majerpro.learning_platform.service.AnalyticsService;
+import com.majerpro.learning_platform.service.analytics.AnalyticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,10 +11,19 @@ import java.util.List;
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
 
+
+
     private final AnalyticsService analyticsService;
 
     public AnalyticsController(AnalyticsService analyticsService) {
         this.analyticsService = analyticsService;
+    }
+
+    // Alias endpoint (optional)
+    // GET /api/analytics/overview?userId=1
+    @GetMapping("/overview")
+    public ResponseEntity<UserOverviewDto> overview(@RequestParam Long userId) {
+        return ResponseEntity.ok(analyticsService.getUserOverview(userId));
     }
 
     /**
