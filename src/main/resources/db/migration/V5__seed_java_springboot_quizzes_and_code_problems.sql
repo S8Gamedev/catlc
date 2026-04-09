@@ -1,28 +1,26 @@
 -- V5__seed_java_springboot_quizzes_and_code_problems.sql
 
-BEGIN;
-
 -- 1) Ensure skills exist
-INSERT INTO skills (name, category, description, difficulty_level, created_at, created_by_user_id)
-SELECT 'Java', 'Programming', 'Core Java programming language fundamentals and concepts', 'INTERMEDIATE', NOW(), 1
+INSERT INTO skills (name, category, description, difficulty_level, created_at)
+SELECT 'Java', 'Programming', 'Core Java programming language fundamentals and concepts', 'INTERMEDIATE', NOW()
     WHERE NOT EXISTS (
     SELECT 1 FROM skills WHERE name = 'Java'
 );
 
-INSERT INTO skills (name, category, description, difficulty_level, created_at, created_by_user_id)
-SELECT 'Spring Boot', 'Framework', 'Spring Boot application development and REST API fundamentals', 'INTERMEDIATE', NOW(), 1
+INSERT INTO skills (name, category, description, difficulty_level, created_at)
+SELECT 'Spring Boot', 'Framework', 'Spring Boot application development and REST API fundamentals', 'INTERMEDIATE', NOW()
     WHERE NOT EXISTS (
     SELECT 1 FROM skills WHERE name = 'Spring Boot'
 );
 
--- 2) Associate skills to users 1, 2, 3 through user_skill_progress
+-- 2) Associate skills to existing users 1 and 2 through user_skill_progress
 INSERT INTO user_skill_progress (
     user_id, skill_id, mastery, learned_percent, confidence_level,
     times_practiced, times_quizzed, times_learned_new, retention_score,
     status, created_at, updated_at
 )
 SELECT u.user_id, s.id, 0, 0, 0, 0, 0, 0, 100, 'ACTIVE', NOW(), NOW()
-FROM (VALUES (1), (2), (3)) AS u(user_id)
+FROM (VALUES (1), (2)) AS u(user_id)
          CROSS JOIN skills s
 WHERE s.name IN ('Java', 'Spring Boot')
   AND NOT EXISTS (
@@ -32,7 +30,7 @@ WHERE s.name IN ('Java', 'Spring Boot')
       AND usp.skill_id = s.id
 );
 
--- 3) Insert 15 Java MCQ questions
+-- 3) Insert Java MCQ questions if missing
 INSERT INTO questions (
     skill_id, type, difficulty, prompt,
     option_a, option_b, option_c, option_d,
@@ -61,9 +59,15 @@ FROM skills s
         ('EASY', 'Which class is used to create immutable strings?', 'StringBuilder', 'StringBuffer', 'String', 'CharArray', 2, 'String objects are immutable in Java.')
 ) AS q(difficulty, prompt, option_a, option_b, option_c, option_d, correct_option_index, explanation)
               ON TRUE
-WHERE s.name = 'Java';
+WHERE s.name = 'Java'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM questions existing
+    WHERE existing.skill_id = s.id
+      AND existing.prompt = q.prompt
+);
 
--- 4) Insert 15 Spring Boot MCQ questions
+-- 4) Insert Spring Boot MCQ questions if missing
 INSERT INTO questions (
     skill_id, type, difficulty, prompt,
     option_a, option_b, option_c, option_d,
@@ -92,59 +96,95 @@ FROM skills s
         ('EASY', 'What does Spring Initializr mainly help generate?', 'Database records', 'Starter project structure', 'Browser cache', 'Docker image layers', 1, 'Spring Initializr generates a ready-to-use project skeleton.')
 ) AS q(difficulty, prompt, option_a, option_b, option_c, option_d, correct_option_index, explanation)
               ON TRUE
-WHERE s.name = 'Spring Boot';
+WHERE s.name = 'Spring Boot'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM questions existing
+    WHERE existing.skill_id = s.id
+      AND existing.prompt = q.prompt
+);
 
--- 5) Create 3 Java quizzes for user 1 and map 5 unique Java questions each
-WITH java_skill AS (
-    SELECT id AS skill_id FROM skills WHERE name = 'Java'
-),
-     java_questions AS (
-         SELECT q.id, ROW_NUMBER() OVER (ORDER BY q.id) AS rn
-         FROM questions q
-                  JOIN java_skill js ON q.skill_id = js.skill_id
-     ),
-     created_quizzes AS (
+-- 5) Create Java quizzes for user 1 if missing
 INSERT INTO quizzes (title, status, created_at, user_id)
-VALUES
-    ('Java Quiz 1', 'ACTIVE', NOW(), 1),
-    ('Java Quiz 2', 'ACTIVE', NOW(), 1),
-    ('Java Quiz 3', 'ACTIVE', NOW(), 1)
-    RETURNING id, title
-    )
-INSERT INTO quiz_questions (quiz_id, question_id)
-SELECT cq.id, jq.id
-FROM created_quizzes cq
-         JOIN java_questions jq
-              ON (cq.title = 'Java Quiz 1' AND jq.rn BETWEEN 1 AND 5)
-                  OR (cq.title = 'Java Quiz 2' AND jq.rn BETWEEN 6 AND 10)
-                  OR (cq.title = 'Java Quiz 3' AND jq.rn BETWEEN 11 AND 15);
+SELECT 'Java Quiz 1', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Java Quiz 1' AND user_id = 1
+);
 
--- 6) Create 3 Spring Boot quizzes for user 1 and map 5 unique Spring Boot questions each
-WITH sb_skill AS (
-    SELECT id AS skill_id FROM skills WHERE name = 'Spring Boot'
-),
-     sb_questions AS (
-         SELECT q.id, ROW_NUMBER() OVER (ORDER BY q.id) AS rn
-         FROM questions q
-                  JOIN sb_skill ss ON q.skill_id = ss.skill_id
-     ),
-     created_quizzes AS (
 INSERT INTO quizzes (title, status, created_at, user_id)
-VALUES
-    ('Spring Boot Quiz 1', 'ACTIVE', NOW(), 1),
-    ('Spring Boot Quiz 2', 'ACTIVE', NOW(), 1),
-    ('Spring Boot Quiz 3', 'ACTIVE', NOW(), 1)
-    RETURNING id, title
-    )
-INSERT INTO quiz_questions (quiz_id, question_id)
-SELECT cq.id, sq.id
-FROM created_quizzes cq
-         JOIN sb_questions sq
-              ON (cq.title = 'Spring Boot Quiz 1' AND sq.rn BETWEEN 1 AND 5)
-                  OR (cq.title = 'Spring Boot Quiz 2' AND sq.rn BETWEEN 6 AND 10)
-                  OR (cq.title = 'Spring Boot Quiz 3' AND sq.rn BETWEEN 11 AND 15);
+SELECT 'Java Quiz 2', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Java Quiz 2' AND user_id = 1
+);
 
--- 7) Insert 3 Java DSA coding problems
+INSERT INTO quizzes (title, status, created_at, user_id)
+SELECT 'Java Quiz 3', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Java Quiz 3' AND user_id = 1
+);
+
+-- 6) Map Java questions to Java quizzes
+INSERT INTO quiz_questions (quiz_id, question_id)
+SELECT qz.id, qq.id
+FROM quizzes qz
+         JOIN (
+    SELECT q.id, ROW_NUMBER() OVER (ORDER BY q.id) AS rn
+    FROM questions q
+             JOIN skills s ON s.id = q.skill_id
+    WHERE s.name = 'Java'
+) qq
+              ON (qz.title = 'Java Quiz 1' AND qq.rn BETWEEN 1 AND 5)
+                  OR (qz.title = 'Java Quiz 2' AND qq.rn BETWEEN 6 AND 10)
+                  OR (qz.title = 'Java Quiz 3' AND qq.rn BETWEEN 11 AND 15)
+WHERE qz.user_id = 1
+  AND NOT EXISTS (
+    SELECT 1
+    FROM quiz_questions existing
+    WHERE existing.quiz_id = qz.id
+      AND existing.question_id = qq.id
+);
+
+-- 7) Create Spring Boot quizzes for user 1 if missing
+INSERT INTO quizzes (title, status, created_at, user_id)
+SELECT 'Spring Boot Quiz 1', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Spring Boot Quiz 1' AND user_id = 1
+);
+
+INSERT INTO quizzes (title, status, created_at, user_id)
+SELECT 'Spring Boot Quiz 2', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Spring Boot Quiz 2' AND user_id = 1
+);
+
+INSERT INTO quizzes (title, status, created_at, user_id)
+SELECT 'Spring Boot Quiz 3', 'ACTIVE', NOW(), 1
+    WHERE NOT EXISTS (
+    SELECT 1 FROM quizzes WHERE title = 'Spring Boot Quiz 3' AND user_id = 1
+);
+
+-- 8) Map Spring Boot questions to Spring Boot quizzes
+INSERT INTO quiz_questions (quiz_id, question_id)
+SELECT qz.id, qq.id
+FROM quizzes qz
+         JOIN (
+    SELECT q.id, ROW_NUMBER() OVER (ORDER BY q.id) AS rn
+    FROM questions q
+             JOIN skills s ON s.id = q.skill_id
+    WHERE s.name = 'Spring Boot'
+) qq
+              ON (qz.title = 'Spring Boot Quiz 1' AND qq.rn BETWEEN 1 AND 5)
+                  OR (qz.title = 'Spring Boot Quiz 2' AND qq.rn BETWEEN 6 AND 10)
+                  OR (qz.title = 'Spring Boot Quiz 3' AND qq.rn BETWEEN 11 AND 15)
+WHERE qz.user_id = 1
+  AND NOT EXISTS (
+    SELECT 1
+    FROM quiz_questions existing
+    WHERE existing.quiz_id = qz.id
+      AND existing.question_id = qq.id
+);
+
+-- 9) Insert Java coding problems if missing
 INSERT INTO code_problems (
     title, prompt, category, difficulty_level,
     sample_input, expected_output, created_at, skill_id
@@ -154,54 +194,37 @@ SELECT cp.title, cp.prompt, cp.category, cp.difficulty_level,
 FROM skills s
          JOIN (
     VALUES
-        (
-            'Reverse a String',
-            'Given a string, return the reversed string. Implement the solution in Java.',
-            'DSA',
-            'EASY',
-            'hello',
-            'olleh'
-        ),
-        (
-            'Find Maximum in Array',
-            'Given an integer array, return the maximum element. Implement the solution in Java.',
-            'DSA',
-            'EASY',
-            '5 1 9 3 7',
-            '9'
-        ),
-        (
-            'Move Zeros to End',
-            'Given an integer array, move all zeros to the end while maintaining the relative order of non-zero elements.',
-            'DSA',
-            'MEDIUM',
-            '0 1 0 3 12',
-            '1 3 12 0 0'
-        )
+        ('Reverse a String', 'Given a string, return the reversed string. Implement the solution in Java.', 'DSA', 'EASY', 'hello', 'olleh'),
+        ('Find Maximum in Array', 'Given an integer array, return the maximum element. Implement the solution in Java.', 'DSA', 'EASY', '5 1 9 3 7', '9'),
+        ('Move Zeros to End', 'Given an integer array, move all zeros to the end while maintaining the relative order of non-zero elements.', 'DSA', 'MEDIUM', '0 1 0 3 12', '1 3 12 0 0')
 ) AS cp(title, prompt, category, difficulty_level, sample_input, expected_output)
               ON TRUE
-WHERE s.name = 'Java';
+WHERE s.name = 'Java'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM code_problems existing
+    WHERE existing.title = cp.title
+      AND existing.skill_id = s.id
+);
 
--- 8) Insert at least 2 test cases per coding problem
-WITH p AS (
-    SELECT id, title
-    FROM code_problems
-    WHERE title IN ('Reverse a String', 'Find Maximum in Array', 'Move Zeros to End')
-)
+-- 10) Insert coding test cases if missing
 INSERT INTO code_test_cases (problem_id, stdin, expected_output, is_sample, weight)
 SELECT p.id, tc.stdin, tc.expected_output, tc.is_sample, tc.weight
-FROM p
+FROM code_problems p
          JOIN (
     VALUES
         ('Reverse a String', 'hello', 'olleh', TRUE, 1),
         ('Reverse a String', 'Java', 'avaJ', FALSE, 1),
-
         ('Find Maximum in Array', '5 1 9 3 7', '9', TRUE, 1),
         ('Find Maximum in Array', '-2 -9 -1 -7', '-1', FALSE, 1),
-
         ('Move Zeros to End', '0 1 0 3 12', '1 3 12 0 0', TRUE, 1),
         ('Move Zeros to End', '1 0 2 0 0 3', '1 2 3 0 0 0', FALSE, 1)
 ) AS tc(problem_title, stdin, expected_output, is_sample, weight)
-              ON p.title = tc.problem_title;
-
-COMMIT;
+              ON p.title = tc.problem_title
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM code_test_cases existing
+    WHERE existing.problem_id = p.id
+      AND existing.stdin = tc.stdin
+      AND existing.expected_output = tc.expected_output
+);
