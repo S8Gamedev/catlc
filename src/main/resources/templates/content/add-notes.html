@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Notes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .panel {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        textarea.note-body {
+            min-height: 360px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="mb-4">
+        <a th:href="@{/content(skillId=${form.skillId}, userId=${form.userId})}"
+           class="btn btn-outline-secondary btn-sm">
+            Back to Skill Content
+        </a>
+    </div>
+
+    <div class="card panel">
+        <div class="card-body p-4">
+            <h2 class="mb-1">Add or Edit Notes</h2>
+            <p class="text-muted mb-4" th:text="${form.skillName}">Skill Name</p>
+
+            <form th:action="@{/content/save-notes}"
+                  th:object="${form}"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <input type="hidden" th:field="*{skillId}">
+                <input type="hidden" th:field="*{userId}">
+
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" th:field="*{title}" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Summary</label>
+                    <textarea th:field="*{summary}" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Upload .txt file</label>
+                    <input type="file"
+                           th:field="*{textFile}"
+                           class="form-control"
+                           accept=".txt,text/plain">
+                    <div class="form-text">
+                        Upload a plain text file to append or import notes.
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Notes Content</label>
+                    <textarea th:field="*{content}" class="form-control note-body"></textarea>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary">Save Notes</button>
+                    <a th:href="@{/content(skillId=${form.skillId}, userId=${form.userId})}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

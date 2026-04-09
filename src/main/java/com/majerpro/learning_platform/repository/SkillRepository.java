@@ -15,5 +15,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     List<Skill> findByDifficultyLevel(String difficultyLevel);
 
+    Optional<Skill> findByNameIgnoreCase(String name);
+
     boolean existsByName(String name);
 }

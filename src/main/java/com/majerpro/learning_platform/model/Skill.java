@@ -32,6 +32,10 @@ public class Skill {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

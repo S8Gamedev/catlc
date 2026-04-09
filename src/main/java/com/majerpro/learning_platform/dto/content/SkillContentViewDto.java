@@ -2,14 +2,12 @@ package com.majerpro.learning_platform.dto.content;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-public class ContentSkillListItemDto {
+public class SkillContentViewDto {
     private Long skillId;
     private String skillName;
-    private String description;
-    private int pendingTasks;
-    private LocalDateTime nextDueAt;
+    private String title;
+    private String summary;
+    private String content;
     private boolean contentAvailable;
 }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Content</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .panel {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="mb-0">Admin Content Management</h2>
+        <a th:href="@{/content(userId=${userId})}" class="btn btn-outline-secondary">Student View</a>
+    </div>
+
+    <div class="card panel">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Skill</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="skill : ${skills}">
+                        <td th:text="${skill.skillName}">Skill</td>
+                        <td th:text="${skill.description}">Description</td>
+                        <td>
+                            <span th:if="${skill.contentAvailable}" class="badge bg-success">Has Content</span>
+                            <span th:if="${!skill.contentAvailable}" class="badge bg-warning text-dark">Missing</span>
+                        </td>
+                        <td class="text-end">
+                            <a th:href="@{/admin/content/edit(skillId=${skill.skillId}, userId=${userId})}"
+                               class="btn btn-primary btn-sm">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(skills)}">
+                        <td colspan="4" class="text-center text-muted py-4">No skills available.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

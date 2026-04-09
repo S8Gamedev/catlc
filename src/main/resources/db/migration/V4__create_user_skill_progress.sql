@@ -1,0 +1,21 @@
+CREATE TABLE user_skill_progress (
+                                     id BIGSERIAL PRIMARY KEY,
+                                     user_id BIGINT NOT NULL,
+                                     skill_id BIGINT NOT NULL,
+                                     mastery DOUBLE PRECISION NOT NULL DEFAULT 0,
+                                     learned_percent DOUBLE PRECISION NOT NULL DEFAULT 0,
+                                     confidence_level DOUBLE PRECISION NOT NULL DEFAULT 0,
+                                     times_practiced INTEGER NOT NULL DEFAULT 0,
+                                     times_quizzed INTEGER NOT NULL DEFAULT 0,
+                                     times_learned_new INTEGER NOT NULL DEFAULT 0,
+                                     retention_score DOUBLE PRECISION NOT NULL DEFAULT 100,
+                                     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+                                     last_learned_at TIMESTAMP NULL,
+                                     last_practiced_at TIMESTAMP NULL,
+                                     last_quizzed_at TIMESTAMP NULL,
+                                     last_decay_check_at TIMESTAMP NULL,
+                                     created_at TIMESTAMP NULL,
+                                     updated_at TIMESTAMP NULL,
+                                     CONSTRAINT uk_user_skill UNIQUE (user_id, skill_id),
+                                     CONSTRAINT fk_user_skill_progress_skill FOREIGN KEY (skill_id) REFERENCES skills(id)
+);
